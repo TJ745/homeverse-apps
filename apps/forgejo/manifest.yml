@@ -4,8 +4,9 @@ version: 17.0.0
 tagline: Your own place to keep code, issues and releases
 description: >-
   A software forge that runs on this device: repositories, issues, pull
-  requests and releases, for one person or for a few. Everything stays here,
-  and nothing is shared with anybody you did not invite.
+  requests and releases, for one person or for a few. Clone and push over the
+  web address the way you would with any forge. Everything stays here, and
+  nothing is shared with anybody you did not invite.
 category: developer
 developer: The Forgejo contributors
 website: https://forgejo.org
@@ -13,19 +14,35 @@ source: https://codeberg.org/forgejo/forgejo
 license: GPL-3.0-or-later
 mainService: forgejo
 internalPort: 3000
-proxyAuth: true
+# Forgejo signs its own users in. Git cannot be sent to this device's sign-in
+# page and come back with a session, so a guarded door would answer 401 to
+# every clone and push — which is the one thing a forge is for (ADR 0019).
+proxyAuth: false
+ownAuth:
+  loginPath: /user/login
+  admin:
+    username: homeverse
+    passwordSecret: ADMIN_PASSWORD
+# create-admin runs once and stops; everything else has to come back after a
+# reboot, and the validator holds both to it.
+initServices: [create-admin]
 arch: [amd64, arm64]
 requirements: { ramMb: 256, diskMb: 2000 }
 permissions: []
 extraPorts: []
-secrets: []
+# Derived from this device's own key, so it is a different password on every
+# device and appears in no file in this store.
+secrets: [ADMIN_PASSWORD]
 dependencies: []
 exports: {}
 backup: { strategy: stop, exclude: [] }
 defaultCredentials: null
 releaseNotes: >-
-  First release in the HomeVerse store. Browsing code, issues, pull requests
-  and releases all work. Cloning and pushing do not yet: this app sits behind
-  the same door as the rest of the device, and that door asks a browser to
-  sign in, which git cannot do. Until that is settled, use it to read and
-  manage what is here rather than as the thing you push to.
+  Cloning and pushing now work. Forgejo signs its own users in, so the door in
+  front of it is open and its own login is what guards it — which is what lets
+  git reach it at all. The administrator account is created when you install
+  it, with a password this device derives for itself; the app's page in your
+  dashboard shows both, and that is the only place the password exists.
+  Signing up is closed, so nobody else on your network can claim the account
+  before you do. SSH access would need a port of this device's own, which is a
+  later decision.

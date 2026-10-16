@@ -16,9 +16,10 @@ services:
       FORGEJO__security__INSTALL_LOCK: "true"
       FORGEJO__server__ROOT_URL: ${APP_PUBLIC_URL}
       FORGEJO__server__DOMAIN: ${DEVICE_DOMAIN}
-      # Nobody has an account yet, so the first person to sign up becomes the
-      # administrator — and after that, signing up is closed.
-      FORGEJO__service__DISABLE_REGISTRATION: "false"
+      # Closed, because the administrator below already exists. This is the
+      # condition that makes an open door safe: without it, the first stranger
+      # on the network to find this app could claim it.
+      FORGEJO__service__DISABLE_REGISTRATION: "true"
     volumes:
       - ${APP_DATA_DIR}/data:/data
     ports:
@@ -29,3 +30,36 @@ services:
       timeout: 5s
       retries: 15
       start_period: 45s
+
+  # The administrator, made by the device rather than by whoever reaches the
+  # app first. Forgejo has no environment variable for this the way some apps
+  # do, so it is created with Forgejo's own command line, once, against the
+  # database the server has just finished setting up.
+  #
+  # It runs on every start and that is deliberate: it is cheap, it says what
+  # it found, and an account somebody deleted by accident comes back.
+  create-admin:
+    image: codeberg.org/forgejo/forgejo:17.0.0@sha256:06d38310de496a10186d952bdad5ca764c153c8023ede8dfa0944c79a1dc5412
+    restart: "no"
+    # The same account Forgejo itself runs as, so the rows and files this
+    # writes belong to the same user as everything around them.
+    user: "${PUID}:${PGID}"
+    depends_on:
+      forgejo:
+        condition: service_healthy
+    environment:
+      FORGEJO__database__DB_TYPE: sqlite3
+      FORGEJO__database__PATH: /data/forgejo/forgejo.db
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        if forgejo admin user create --admin --username homeverse
+        --email homeverse@localhost --password "$$ADMIN_PASSWORD"
+        --must-change-password=false 2>&1; then
+        echo "HomeVerse: created the administrator account.";
+        else
+        echo "HomeVerse: the administrator already exists, leaving it alone.";
+        fi
