@@ -1,0 +1,45 @@
+id: adguard-home
+name: AdGuard Home
+version: 0.107.79
+tagline: Block adverts and trackers for every device in the house
+description: >-
+  Answers the name lookups every device on your network makes, and refuses the
+  ones that lead to advertising and tracking. It works for phones, televisions
+  and anything else that cannot run an ad blocker of its own — point your
+  router's DNS at this device and the whole house is covered.
+category: network
+developer: AdGuard
+website: https://adguard.com/adguard-home.html
+source: https://github.com/AdguardTeam/AdGuardHome
+license: GPL-3.0-only
+mainService: adguard-home
+internalPort: 3000
+# Only ever used in a browser, so the device's own door is the right guard
+# for it. Name lookups arrive on port 53 instead, which is not a thing a
+# password can protect and never has been.
+proxyAuth: true
+# set-up writes the first configuration and stops; everything else has to come
+# back after a reboot, and the validator holds both to it.
+initServices: [set-up]
+arch: [amd64, arm64]
+requirements: { ramMb: 256, diskMb: 500 }
+# Port 53 is the whole point of this app: it has to be the port other devices
+# ask, because that is the port every device asks.
+permissions: [extra-ports]
+extraPorts:
+  - { host: 53, container: 53, protocol: udp }
+  - { host: 53, container: 53, protocol: tcp }
+secrets: []
+dependencies: []
+exports: {}
+backup: { strategy: stop, exclude: [work/data/filters] }
+defaultCredentials: null
+releaseNotes: >-
+  First release in the HomeVerse store. It is configured when you install it,
+  so there is no setup questionnaire to answer: name lookups on port 53,
+  everything forwarded to Quad9 over an encrypted connection, and the usual
+  blocklist switched on. Change any of that in its own settings. To cover the
+  whole house, point your router's DNS at this device's address. Needs port 53
+  free — on the system this product installs, nothing else is using it, and
+  the device's own name lookups do not go through this app, so switching it
+  off never leaves the device unable to reach the internet.
