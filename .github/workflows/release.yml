@@ -1,0 +1,73 @@
+name: Release
+
+# Publishes a signed release of the store. Devices fetch the newest one,
+# check the signature against the key built into them, and refuse anything
+# that does not verify.
+#
+# Pushing a tag like v0.1.0 makes a release. The tag has to match the version
+# in store.yml, so a release can never be named after a version the files
+# inside it do not claim.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Sign and publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: checkout
+
+      - name: Check the tag and store.yml agree
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME#v}"
+          version="$(sed -n 's/^version:[[:space:]]*//p' checkout/store.yml | head -1 | tr -d "\"' ")"
+          if [ "$tag" != "$version" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match store.yml version $version" >&2
+            exit 1
+          fi
+          id="$(sed -n 's/^id:[[:space:]]*//p' checkout/store.yml | head -1 | tr -d "\"' ")"
+          mv checkout "$id"
+          echo "STORE_DIR=$id" >> "$GITHUB_ENV"
+
+      # One folder at the root, named after the store — the shape a device
+      # unpacks and the shape the checks run against.
+      - name: Pack
+        run: |
+          set -euo pipefail
+          tar --numeric-owner --owner=0 --group=0 --sort=name \
+            --exclude='.git' --exclude='.github' --exclude='.gitattributes' \
+            -czf store.tar.gz "$STORE_DIR"
+          sha256sum store.tar.gz
+
+      # The signature is detached and over the bytes of the tarball. Ed25519
+      # signs the message itself, so there is no hash choice to get wrong.
+      - name: Sign
+        env:
+          SIGNING_KEY: ${{ secrets.HV_STORE_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SIGNING_KEY:-}" ]; then
+            echo "HV_STORE_SIGNING_KEY is not set. A store release has to be signed." >&2
+            exit 1
+          fi
+          printf '%s' "$SIGNING_KEY" > signing-key.pem
+          openssl pkeyutl -sign -rawin -inkey signing-key.pem \
+            -in store.tar.gz -out store.tar.gz.sig
+          rm -f signing-key.pem
+          ls -l store.tar.gz store.tar.gz.sig
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            store.tar.gz
+            store.tar.gz.sig
+          fail_on_unmatched_files: true
+          generate_release_notes: true
