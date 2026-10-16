@@ -15,7 +15,7 @@ mainService: forgejo
 internalPort: 3000
 proxyAuth: true
 arch: [amd64, arm64]
-requirements: { ramMb: 512, diskMb: 2000 }
+requirements: { ramMb: 256, diskMb: 2000 }
 permissions: []
 extraPorts: []
 secrets: []
