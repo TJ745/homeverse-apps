@@ -1,0 +1,4 @@
+# Every file here is read by a Linux device, so every file here ends its lines
+# the way Linux does — whatever the machine that edited it prefers.
+* text=auto eol=lf
+*.svg text eol=lf
