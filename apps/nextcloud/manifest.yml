@@ -1,0 +1,44 @@
+id: nextcloud
+name: Nextcloud
+version: 35.0.2
+tagline: Your files, calendar and contacts, on your own device
+description: >-
+  Keeps your files on this device and syncs them to your computers and phones,
+  the way a cloud drive does, without the cloud. Calendars, contacts and shared
+  folders come with it.
+category: files
+developer: Nextcloud GmbH
+website: https://nextcloud.com
+source: https://github.com/nextcloud/server
+license: AGPL-3.0-or-later
+mainService: nextcloud
+internalPort: 80
+# Nextcloud signs its own users in. Its desktop and phone apps authenticate
+# over WebDAV, which cannot be sent to this device's sign-in page and come
+# back with a session, so the door in front of it is open and Nextcloud's own
+# login is what guards it (HomeVerse ADR 0019).
+proxyAuth: false
+ownAuth:
+  loginPath: /login
+  admin:
+    username: homeverse
+    passwordSecret: ADMIN_PASSWORD
+arch: [amd64, arm64]
+requirements: { ramMb: 512, diskMb: 2000 }
+permissions: []
+extraPorts: []
+# Derived from this device's own key, so it is a different password on every
+# device and appears in no file in this store.
+secrets: [ADMIN_PASSWORD]
+dependencies: []
+exports: {}
+backup: { strategy: stop, exclude: [data/appdata_*/preview] }
+defaultCredentials: null
+releaseNotes: >-
+  First release in the HomeVerse store. The administrator account is created
+  when you install it, with a password this device derives for itself — the
+  app's page in your dashboard shows both, and that is the only place the
+  password exists. Signing up is closed, so nobody else on your network can
+  claim the account before you do. Keeps its data in a single SQLite file,
+  which suits one household; a separate database server would be a later
+  choice.
