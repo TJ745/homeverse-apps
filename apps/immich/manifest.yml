@@ -28,10 +28,11 @@ ownAuth:
 # reboot, and the validator holds both to it.
 initServices: [create-admin]
 arch: [amd64, arm64]
-# The largest app in this store, and the only one that would struggle on a
-# small device: the part that recognises faces and objects needs most of
-# this on its own.
-requirements: { ramMb: 4096, diskMb: 10000 }
+# The largest app in this store by some way. Measured idling at 1.4 GB
+# across its four containers; the rest is headroom for the part that
+# recognises faces and objects, which works hardest just after a phone
+# has uploaded a few thousand photographs.
+requirements: { ramMb: 2048, diskMb: 10000 }
 permissions: []
 extraPorts: []
 # Both derived from this device's own key, so they differ on every device and
