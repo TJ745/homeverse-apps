@@ -24,6 +24,8 @@ exports: {}
 backup: { strategy: stop, exclude: [] }
 defaultCredentials: null
 releaseNotes: >-
-  First release in the HomeVerse store. Cloning and pushing work over the web
-  address; SSH access would need a port of its own on this device, which is a
-  later decision.
+  First release in the HomeVerse store. Browsing code, issues, pull requests
+  and releases all work. Cloning and pushing do not yet: this app sits behind
+  the same door as the rest of the device, and that door asks a browser to
+  sign in, which git cannot do. Until that is settled, use it to read and
+  manage what is here rather than as the thing you push to.
