@@ -1,0 +1,29 @@
+id: syncthing
+name: Syncthing
+version: 2.1.5
+tagline: Keep folders in sync between your devices
+description: >-
+  Keeps chosen folders the same on all of your own devices, sending the files
+  straight between them, with no account and no copy on anyone else's computer.
+category: files
+developer: The Syncthing Foundation
+website: https://syncthing.net
+source: https://github.com/syncthing/syncthing
+license: MPL-2.0
+mainService: syncthing
+internalPort: 8384
+proxyAuth: true
+arch: [amd64, arm64]
+requirements: { ramMb: 128, diskMb: 500 }
+permissions: [extra-ports]
+extraPorts:
+  - { host: 22000, container: 22000, protocol: tcp }
+  - { host: 22000, container: 22000, protocol: udp }
+  - { host: 21027, container: 21027, protocol: udp }
+secrets: []
+dependencies: []
+exports: {}
+backup: { strategy: stop, exclude: [] }
+defaultCredentials: null
+releaseNotes: >-
+  First release in the HomeVerse store. Idle memory measured at 60 MB on a device that had been running for eight hours.

@@ -1,0 +1,89 @@
+name: Store
+
+# Three checks, from section 5 of the build plan.
+#
+# The first reads only these files and must pass on every change. The other
+# two ask the internet questions — whether each image really exists for every
+# processor, and whether the project behind each app is still alive — so they
+# also run on a schedule, because those answers change without anybody editing
+# this repository.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Every Monday morning. An app whose project was archived last week should
+    # be noticed by a check rather than by somebody's device.
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Validate the store
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: The store
+        uses: actions/checkout@v7
+        with:
+          path: checkout
+
+      # On a device a store lives in a folder named after itself, and every
+      # path to an app is built from that folder. So the checks run against
+      # the same shape rather than against a directory named after the
+      # repository — the daemon does exactly this when it fetches a store.
+      - name: Put the store in a folder named after itself
+        run: |
+          set -euo pipefail
+          id="$(sed -n 's/^id:[[:space:]]*//p' checkout/store.yml | head -1 | tr -d "\"' ")"
+          if [ -z "$id" ]; then
+            echo "store.yml does not say what this store is called" >&2
+            exit 1
+          fi
+          mv checkout "$id"
+          echo "STORE_DIR=$id" >> "$GITHUB_ENV"
+
+      # The checks themselves live with the product, so there is one
+      # definition of what a store has to be rather than two that drift apart.
+      # HV_TOOLS_TOKEN is a read-only token for the HomeVerse repository.
+      - name: The tools that check it
+        uses: actions/checkout@v7
+        with:
+          repository: tj745/homeverse
+          path: tools
+          token: ${{ secrets.HV_TOOLS_TOKEN }}
+
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: tools/package.json
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: tools/.nvmrc
+          cache: pnpm
+          cache-dependency-path: tools/pnpm-lock.yaml
+
+      - name: Install the tools
+        working-directory: tools
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @homeverse/manifest... build
+
+      # Reads only the files in this repository: schemas, pinned digests,
+      # ports, permissions, mounts, healthchecks.
+      - name: Every rule that needs no network
+        working-directory: tools
+        run: node packages/manifest/dist/bin.js "../$STORE_DIR"
+
+      - name: Every image exists for every processor
+        working-directory: tools
+        run: node packages/manifest/dist/bin-arch-check.js "../$STORE_DIR"
+
+      - name: Every app's project is still alive
+        working-directory: tools
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node packages/manifest/dist/bin-upstream-check.js "../$STORE_DIR"

@@ -1,0 +1,13 @@
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:2@sha256:c74379ac4509ce2d2c2633f509e67003ee2e45b6e995c5e43fc101f45a0e1fbe
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+      # Use a simple SQLite file instead of the embedded database server,
+      # and skip the first-start database screen.
+      UPTIME_KUMA_DB_TYPE: sqlite
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data
+    ports:
+      - "127.0.0.1:${APP_HOST_PORT}:3001"

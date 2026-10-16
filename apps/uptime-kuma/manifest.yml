@@ -1,0 +1,26 @@
+id: uptime-kuma
+name: Uptime Kuma
+version: 2.5.5
+tagline: Get alerted when your websites or devices go down
+description: >-
+  Watches your websites, services and devices and tells you when one stops
+  answering, by email, push message or chat.
+category: network
+developer: Louis Lam
+website: https://github.com/louislam/uptime-kuma
+source: https://github.com/louislam/uptime-kuma
+license: MIT
+mainService: uptime-kuma
+internalPort: 3001
+proxyAuth: true
+arch: [amd64, arm64]
+requirements: { ramMb: 256, diskMb: 500 }
+permissions: []
+extraPorts: []
+secrets: []
+dependencies: []
+exports: {}
+backup: { strategy: stop, exclude: [] }
+defaultCredentials: null
+releaseNotes: >-
+  First release in the HomeVerse store. Idle memory measured at 207 MB on a device that had been running for eight hours.

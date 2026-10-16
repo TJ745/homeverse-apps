@@ -1,0 +1,16 @@
+services:
+  syncthing:
+    image: syncthing/syncthing:latest@sha256:397aa00b92b48d65540ea3ae3cbf271b87bdccbe07a0b7bd7d2debc3a7b29138
+    restart: unless-stopped
+    hostname: ${DEVICE_HOSTNAME}
+    environment:
+      TZ: ${TZ}
+      PUID: ${PUID}
+      PGID: ${PGID}
+    volumes:
+      - ${APP_DATA_DIR}/data:/var/syncthing
+    ports:
+      - "127.0.0.1:${APP_HOST_PORT}:8384"
+      - "0.0.0.0:22000:22000/tcp"
+      - "0.0.0.0:22000:22000/udp"
+      - "0.0.0.0:21027:21027/udp"

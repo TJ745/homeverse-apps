@@ -1,0 +1,8 @@
+id: official
+name: HomeVerse App Store
+version: 0.1.0
+
+# The oldest HomeVerse that can read this store. Raise it when a manifest here
+# starts using something an older device would not understand — a device then
+# keeps the last store it could read rather than failing to read this one.
+minHomeverseVersion: 0.1.0
