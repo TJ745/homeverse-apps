@@ -1,0 +1,54 @@
+id: immich
+name: Immich
+version: 3.3.3
+tagline: Your photos and videos, backed up from your phone to your own device
+description: >-
+  Backs up the camera roll from an iPhone or Android phone to this device,
+  the way a phone's own cloud does, and gives you the albums, the map and the
+  search that come with it. It recognises faces and objects on this device, so
+  the pictures never leave the house.
+category: media
+developer: Immich
+website: https://immich.app
+source: https://github.com/immich-app/immich
+license: AGPL-3.0-only
+mainService: immich-server
+internalPort: 2283
+# Immich signs its own users in. Its phone app authenticates with a token of
+# its own, which this device's sign-in page cannot issue, so a guarded door
+# would answer 401 to every backup — which is the one thing Immich is for
+# (ADR 0019).
+proxyAuth: false
+ownAuth:
+  loginPath: /auth/login
+  admin:
+    username: homeverse@localhost
+    passwordSecret: ADMIN_PASSWORD
+# create-admin runs once and stops; everything else has to come back after a
+# reboot, and the validator holds both to it.
+initServices: [create-admin]
+arch: [amd64, arm64]
+# The largest app in this store, and the only one that would struggle on a
+# small device: the part that recognises faces and objects needs most of
+# this on its own.
+requirements: { ramMb: 4096, diskMb: 10000 }
+permissions: []
+extraPorts: []
+# Both derived from this device's own key, so they differ on every device and
+# appear in no file in this store.
+secrets: [ADMIN_PASSWORD, DB_PASSWORD]
+dependencies: []
+exports: {}
+# Stopped first: its database and its files have to be copied at the same
+# moment, and the thumbnails it can draw again are left out.
+backup: { strategy: stop, exclude: [data/thumbs, data/encoded-video, model-cache] }
+defaultCredentials: null
+releaseNotes: >-
+  First release in the HomeVerse store. Install the Immich app on your phone
+  and point it at this device's address. The administrator account is created
+  when you install it, with a password this device derives for itself — the
+  app's page in your dashboard shows both, and that is the only place the
+  password exists. Recognising faces and objects happens on this device and
+  needs a few gigabytes of memory; everything else is far lighter. Video is
+  transcoded with the processor, since using a graphics card means giving an
+  app access to the hardware, which is a later decision.

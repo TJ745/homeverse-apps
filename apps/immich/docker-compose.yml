@@ -1,0 +1,104 @@
+services:
+  immich-server:
+    image: ghcr.io/immich-app/immich-server:v3.3.3@sha256:bae7664ff3aa4c2c1fcbdcdd86b40b105643c5f861f3e6a770fc760089f25862
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+      DB_HOSTNAME: database
+      DB_USERNAME: immich
+      DB_DATABASE_NAME: immich
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOSTNAME: redis
+      IMMICH_PORT: "2283"
+    volumes:
+      # The photos themselves. Inside the app's own folder, so removing the
+      # app with "keep my files" keeps them.
+      - ${APP_DATA_DIR}/data:/data
+    ports:
+      - "127.0.0.1:${APP_HOST_PORT}:2283"
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:2283/api/server/ping | grep -q pong"]
+      interval: 20s
+      timeout: 5s
+      retries: 30
+      start_period: 120s
+
+  # Recognising faces and objects, on this device. This is the part that needs
+  # the memory, and the part that means none of the pictures are sent anywhere
+  # to be looked at.
+  immich-machine-learning:
+    image: ghcr.io/immich-app/immich-machine-learning:v3.3.3@sha256:73915f07e1f4289ba45b174c58443db74cef47ddf502613f475fc5e52458ea42
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+    volumes:
+      # The models it downloads once. Excluded from backups: they can be
+      # fetched again, and they are large.
+      - ${APP_DATA_DIR}/model-cache:/cache
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request;urllib.request.urlopen('http://127.0.0.1:3003/ping')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 20
+      start_period: 180s
+
+  redis:
+    image: docker.io/valkey/valkey:9@sha256:c123e3715db63d06d4ad6964884037aa0d5d4d703939b9929954112889708e1d
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  database:
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+      POSTGRES_USER: immich
+      POSTGRES_DB: immich
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    volumes:
+      - ${APP_DATA_DIR}/database:/var/lib/postgresql/data
+    shm_size: 128mb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --dbname=immich --username=immich"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  # The administrator, made by the device rather than by whoever reaches the
+  # app first. Immich has no environment variable for this, but it has an API
+  # that creates the first one — and only the first one, so this is safe to
+  # run again and simply does nothing the second time.
+  create-admin:
+    image: ghcr.io/immich-app/immich-server:v3.3.3@sha256:bae7664ff3aa4c2c1fcbdcdd86b40b105643c5f861f3e6a770fc760089f25862
+    restart: "no"
+    depends_on:
+      immich-server:
+        condition: service_healthy
+    environment:
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        code=$$(curl -sS -o /tmp/out -w '%{http_code}'
+        -X POST http://immich-server:2283/api/auth/admin-sign-up
+        -H 'Content-Type: application/json'
+        -d "{\"email\":\"homeverse@localhost\",\"password\":\"$$ADMIN_PASSWORD\",\"name\":\"HomeVerse\"}");
+        if [ "$$code" = "201" ]; then
+        echo "HomeVerse: created the administrator account.";
+        else
+        echo "HomeVerse: the administrator already exists, leaving it alone. ($$code)";
+        fi
