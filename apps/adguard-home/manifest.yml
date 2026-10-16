@@ -36,10 +36,12 @@ backup: { strategy: stop, exclude: [work/data/filters] }
 defaultCredentials: null
 releaseNotes: >-
   First release in the HomeVerse store. It is configured when you install it,
-  so there is no setup questionnaire to answer: name lookups on port 53,
-  everything forwarded to Quad9 over an encrypted connection, and the usual
-  blocklist switched on. Change any of that in its own settings. To cover the
-  whole house, point your router's DNS at this device's address. Needs port 53
-  free — on the system this product installs, nothing else is using it, and
-  the device's own name lookups do not go through this app, so switching it
-  off never leaves the device unable to reach the internet.
+  so there is no setup questionnaire: name lookups on port 53, forwarded to
+  Quad9, which keeps no logs and refuses known-malicious names, with the usual
+  blocklist switched on. Change any of that in its own settings. Lookups are
+  not encrypted by default because some networks block encrypted DNS outright
+  — turn it on under Encryption if yours does not. To cover the whole house,
+  point your router's DNS at this device. It needs port 53, which nothing else
+  uses on the system this product installs; the device's own name lookups do
+  not go through this app, so switching it off never leaves the device unable
+  to reach the internet.
