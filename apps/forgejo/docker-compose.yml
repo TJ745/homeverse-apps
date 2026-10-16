@@ -1,0 +1,31 @@
+services:
+  forgejo:
+    image: codeberg.org/forgejo/forgejo:17.0.0@sha256:06d38310de496a10186d952bdad5ca764c153c8023ede8dfa0944c79a1dc5412
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+      USER_UID: ${PUID}
+      USER_GID: ${PGID}
+      # A single file rather than the database server Forgejo can also use.
+      # One app, one file, nothing else to run, nothing else to back up.
+      FORGEJO__database__DB_TYPE: sqlite3
+      FORGEJO__database__PATH: /data/forgejo/forgejo.db
+      # Skips the first-run installation page, which would otherwise ask a
+      # person questions this file has already answered — and would leave the
+      # app reporting itself unhealthy until somebody opened a browser.
+      FORGEJO__security__INSTALL_LOCK: "true"
+      FORGEJO__server__ROOT_URL: ${APP_PUBLIC_URL}
+      FORGEJO__server__DOMAIN: ${DEVICE_DOMAIN}
+      # Nobody has an account yet, so the first person to sign up becomes the
+      # administrator — and after that, signing up is closed.
+      FORGEJO__service__DISABLE_REGISTRATION: "false"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    ports:
+      - "127.0.0.1:${APP_HOST_PORT}:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3000/api/healthz || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 15
+      start_period: 45s

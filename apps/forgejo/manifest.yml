@@ -1,0 +1,29 @@
+id: forgejo
+name: Forgejo
+version: 17.0.0
+tagline: Your own place to keep code, issues and releases
+description: >-
+  A software forge that runs on this device: repositories, issues, pull
+  requests and releases, for one person or for a few. Everything stays here,
+  and nothing is shared with anybody you did not invite.
+category: developer
+developer: The Forgejo contributors
+website: https://forgejo.org
+source: https://codeberg.org/forgejo/forgejo
+license: GPL-3.0-or-later
+mainService: forgejo
+internalPort: 3000
+proxyAuth: true
+arch: [amd64, arm64]
+requirements: { ramMb: 512, diskMb: 2000 }
+permissions: []
+extraPorts: []
+secrets: []
+dependencies: []
+exports: {}
+backup: { strategy: stop, exclude: [] }
+defaultCredentials: null
+releaseNotes: >-
+  First release in the HomeVerse store. Cloning and pushing work over the web
+  address; SSH access would need a port of its own on this device, which is a
+  later decision.

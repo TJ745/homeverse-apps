@@ -1,0 +1,28 @@
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:12.2@sha256:357724bf0ae27a672c7cbaa899db2d9abeb13dbd8657ccce750258a4c059d037
+    restart: unless-stopped
+    # Runs as the device's own unprivileged account rather than as root, so
+    # the files it writes belong to somebody sensible.
+    user: "${PUID}:${PGID}"
+    environment:
+      TZ: ${TZ}
+      # Jellyfin builds the links it sends to a browser from this, and every
+      # request reaches it through Caddy rather than directly.
+      JELLYFIN_PublishedServerUrl: ${APP_PUBLIC_URL}
+    volumes:
+      - ${APP_DATA_DIR}/config:/config
+      - ${APP_DATA_DIR}/cache:/cache
+      # Where to put the films and music. It is inside the app's own folder so
+      # that removing the app with "keep my files" keeps them.
+      - ${APP_DATA_DIR}/media:/media
+    ports:
+      - "127.0.0.1:${APP_HOST_PORT}:8096"
+    healthcheck:
+      # Answers before anybody has been through the setup screens, which is
+      # what makes it usable as a health check at all.
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8096/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 15
+      start_period: 60s

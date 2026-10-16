@@ -1,0 +1,29 @@
+id: jellyfin
+name: Jellyfin
+version: 12.2.0
+tagline: Watch your own films, programmes and music on any screen
+description: >-
+  Plays the video and music you already own, on a television, a phone or a
+  browser. It reads the files from a folder on this device, finds the artwork
+  and descriptions for them, and remembers where everybody got to.
+category: media
+developer: The Jellyfin Project
+website: https://jellyfin.org
+source: https://github.com/jellyfin/jellyfin
+license: GPL-2.0-only
+mainService: jellyfin
+internalPort: 8096
+proxyAuth: true
+arch: [amd64, arm64]
+requirements: { ramMb: 512, diskMb: 2000 }
+permissions: []
+extraPorts: []
+secrets: []
+dependencies: []
+exports: {}
+backup: { strategy: stop, exclude: [cache, transcodes] }
+defaultCredentials: null
+releaseNotes: >-
+  First release in the HomeVerse store. Plays with the processor rather than a
+  graphics card: hardware transcoding needs access to the device's hardware,
+  which an app has to ask for, and that is a later decision.
