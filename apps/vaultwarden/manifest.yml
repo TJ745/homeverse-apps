@@ -1,0 +1,49 @@
+id: vaultwarden
+name: Vaultwarden
+version: 1.37.4
+tagline: Your passwords, kept on your own device
+description: >-
+  A password manager that works with the Bitwarden apps and browser extensions
+  you already know, with everything stored here instead of on somebody else's
+  server. Your vault is encrypted in your browser before it is sent, so even
+  this device cannot read it.
+category: security
+developer: Daniel García
+website: https://github.com/dani-garcia/vaultwarden
+source: https://github.com/dani-garcia/vaultwarden
+license: AGPL-3.0-only
+mainService: vaultwarden
+internalPort: 80
+# Vaultwarden signs its own users in, and its browser extensions and phone
+# apps authenticate with its own tokens — which this device's sign-in page
+# cannot issue (HomeVerse ADR 0019).
+proxyAuth: false
+# The administration page, where the owner invites themselves and anybody
+# else. Not a vault account: this device cannot make one of those, because a
+# vault key is derived in the browser from a password the device never sees —
+# which is the whole point of the app.
+ownAuth:
+  loginPath: /admin
+  admin:
+    username: admin
+    passwordSecret: ADMIN_TOKEN
+arch: [amd64, arm64]
+requirements: { ramMb: 256, diskMb: 500 }
+permissions: []
+extraPorts: []
+secrets: [ADMIN_TOKEN]
+dependencies: []
+exports: {}
+backup: { strategy: stop, exclude: [data/icon_cache, data/tmp] }
+defaultCredentials: null
+releaseNotes: >-
+  First release in the HomeVerse store. **Turn HTTPS on before you use this**
+  — a browser only gives a page the cryptography a password manager needs when
+  the page arrived over a secure connection, so the vault will not open over a
+  plain http:// address. Settings has a switch for it. Signing up is closed,
+  so nobody on your network can make an account: open the administration page
+  from your dashboard, using the token shown there, and invite yourself. This
+  device deliberately cannot create your vault account for you — the key that
+  encrypts your passwords is made in your browser from a password this device
+  never sees, and that is what keeps the vault private even from the machine
+  it sits on.

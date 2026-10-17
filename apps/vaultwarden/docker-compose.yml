@@ -1,0 +1,31 @@
+services:
+  vaultwarden:
+    image: vaultwarden/server:1.37.4@sha256:efb3cde962015fcc036b2ea625242248611943b27212ebf4392841fb30fad055
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+      # Every link Vaultwarden builds, and the origin its own clients check.
+      DOMAIN: ${APP_PUBLIC_URL}
+      # Closed, because the door in front of this app is open so that phones
+      # and browser extensions can reach it. Without this, anybody on the
+      # network could make an account. The owner invites themselves from the
+      # administration page instead.
+      SIGNUPS_ALLOWED: "false"
+      INVITATIONS_ALLOWED: "true"
+      # The administration page's password, derived for this device alone and
+      # shown on the app's page in the dashboard. Deliberately not left empty:
+      # an empty token does not disable that page, it makes it public.
+      ADMIN_TOKEN: ${ADMIN_TOKEN}
+      # A single file rather than a database server.
+      DATABASE_URL: /data/db.sqlite3
+      ROCKET_PORT: "80"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    ports:
+      - "127.0.0.1:${APP_HOST_PORT}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:80/alive || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 15
+      start_period: 45s
